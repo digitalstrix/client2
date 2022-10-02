@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Answer;
 use App\Models\Categorie;
 use App\Models\Question;
 use App\Models\User;
@@ -18,8 +19,10 @@ class Strix extends Controller
         $rules =array(
             "name" => "required",
             "email" => "required|email|unique:users",
-            "password" => "required|min:6",
+            "password" => "",
             "user_type" => "required|in:user,admin,support",
+            "employee_id" => "required|unique:users",
+            "department_name" => "required|in:marketing,sales,technical"
         );
         $validator= Validator::make($request->all(), $rules);
         if ($validator->fails()) {
@@ -29,6 +32,8 @@ class Strix extends Controller
             $user->name=$request->name;
             $user->email=$request->email;
             $user->user_type=$request->user_type;
+            $user->employee_id=$request->employee_id;
+            $user->department_name=$request->department_name;
             $user->user_token = (new Token())->Unique('users', 'user_token', 60);
             $user->password=Hash::make($request->password);
             $result= $user->save();
@@ -49,18 +54,19 @@ class Strix extends Controller
     public function login(Request $request)
     {
         $rules =array(
-            "email" => "required|email",
-            "password" => "required|min:6",
-            "user_type" => "required|in:user,vendor,admin",
+            // "email" => "required|email",
+            // "password" => "required|min:6",
+            // "user_type" => "required|in:user,vendor,admin",
+            "employee_id" => "required|unique:users",
         );
         $validator= Validator::make($request->all(), $rules);
         if ($validator->fails()) {
             return $validator->errors();
         } else {
-            if(!User::where('email',$request->email)->where('user_type',$request->user_type)->first()){
+            if(!User::where('employee_id',$request->employee_id)->first()){
                 return response(["status" =>"failed", "message"=>"User is not Registered or Invaild User Type"], 401);
             }
-            $user = User::where('email',$request->email)->where('user_type',$request->user_type)->first();
+            $user = User::where('employee_id',$request->employee_id)->first();
             if(!Hash::check($request->password, $user->password)){
                 return response(["status" =>"failed", "message"=>"Incorrect Password"], 401);
             }
@@ -168,14 +174,16 @@ class Strix extends Controller
             }
             $temp = User::where('user_token',$request->token)->first();
             $user = Question::where('id',$request->question_id)->first();
-            $user->answered_by = $temp->id;
-            $user->answer = $request->answer;
-            $result = $user->save();
+            $data = new Answer();
+            $data->answered_by = $temp->id;
+            $data->answer = $request->answer;
+            $data->question_id = $request->question_id;
+            $result = $data->save();
             if ($result) {
                 $response = [
                              'Status' => 'success',
                              'message' => 'Answer is successfully created',
-                             'data' => $user,
+                             
              ];
                 return response($response, 201);
             } else {
@@ -196,11 +204,18 @@ class Strix extends Controller
                 return response(["status" => "error", "message" =>"Answer is not Fetched | False Token"], 401);
             }
             $user = Question::all();
+            $main = array();
+            foreach($user as $key){
+                $temp = array();
+                $answer = Answer::where('question_id',$key->id)->get();
+                $temp[] = (['Question' => $key, 'answers' => $answer]);
+                $main[] = $temp;
+            }
             if ($user) {
                 $response = [
                              'Status' => 'success',
                              'message' => 'All Question Answers',
-                             'data' => $user,
+                             'data' => $main,
              ];
                 return response($response, 201);
             } else {
@@ -222,6 +237,7 @@ class Strix extends Controller
             }
             $temp = User::where('user_token',$request->token)->first();
             $user = Question::where('answered_by',$temp->id)->get();
+
             if ($user) {
                 $response = [
                              'Status' => 'success',
@@ -248,11 +264,18 @@ class Strix extends Controller
             }
             $temp = User::where('user_token',$request->token)->first();
             $user = Question::where('user_id',$temp->id)->get();
+            $main = array();
+            foreach($user as $key){
+                $temp = array();
+                $answer = Answer::where('question_id',$key->id)->get();
+                $temp[] = (['Question' => $key, 'answers' => $answer]);
+                $main[] = $temp;
+            }
             if ($user) {
                 $response = [
                              'Status' => 'success',
                              'message' => 'All Question Answers',
-                             'data' => $user,
+                             'data' => $main,
              ];
                 return response($response, 201);
             } else {
@@ -278,11 +301,18 @@ class Strix extends Controller
             }
             $temp = User::where('user_token',$request->token)->first();
             $user = Question::where('category_id',$request->categorie_id)->get();
+            $main = array();
+            foreach($user as $key){
+                $temp = array();
+                $answer = Answer::where('question_id',$key->id)->get();
+                $temp[] = (['Question' => $key, 'answers' => $answer]);
+                $main[] = $temp;
+            }
             if ($user) {
                 $response = [
                              'Status' => 'success',
                              'message' => 'All Question Answers',
-                             'data' => $user,
+                             'data' => $main,
              ];
                 return response($response, 201);
             } else {
@@ -307,11 +337,18 @@ class Strix extends Controller
                 return response(["status" => "error", "message" =>"Answer is not Fetched | False Token"], 401);
             }
             $user = Question::where('id',$request->question_id)->get();
+            $main = array();
+            foreach($user as $key){
+                $temp = array();
+                $answer = Answer::where('question_id',$key->id)->get();
+                $temp[] = (['Question' => $key, 'answers' => $answer]);
+                $main[] = $temp;
+            }
             if ($user) {
                 $response = [
                              'Status' => 'success',
                              'message' => 'Question Answers Details have been fetched successfully',
-                             'data' => $user,
+                             'data' => $main,
              ];
                 return response($response, 201);
             } else {
