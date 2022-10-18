@@ -386,6 +386,43 @@ class Strix extends Controller
             }
         }
     }
+    public function getcount(Request $request)
+    {
+        $rules =array(
+         );
+        $validator= Validator::make($request->all(), $rules);
+        if ($validator->fails()) {
+            return $validator->errors();
+        } else {
+            $cat = Question::distinct('category_id')->get('category_id');
+            // echo $cat;
+            $main = array();
+            foreach($cat as $category) {
+                $total = Question::where('category_id',$category->category_id)->count();
+                $total1 = Question::where('category_id',$category->category_id)->get();
+                $t2 = 0;
+                foreach($total1 as $t1){
+                    if(Answer::where('question_id',$t1->id)->first()){
+                    $t2 = $t2 + 1;
+                    }
+                }
+                // $win = Answer::distinct('question_id')->get();
+                // $stotal = Question::where('category_id',$category->id)->wherein('id',$win)->count();
+                $temp[] = (['Category_id' => $category->category_id, 'total_questiom' => $total, 'total_answered_question' => $t2]);
+                $main[] = $temp;
+            }
+            if ($main) {
+                $response = [
+                             'Status' => 'success',
+                             'message' => 'Count',
+                             'data' => $main,
+             ];
+                return response($response, 201);
+            } else {
+                return response(["status" => "error", "message" =>"Answer is not Fetched"], 401);
+            }
+        }
+    }
 
 
     

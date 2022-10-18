@@ -20,6 +20,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 Route::post("/register",'App\Http\Controllers\Strix@register'); 
 Route::post("/login",'App\Http\Controllers\Strix@login'); 
+Route::get("/getcount", 'App\Http\Controllers\Strix@getcount');
 Route::group(['middleware' => 'auth:sanctum'], function(){
     Route::post("/addCategory", 'App\Http\Controllers\Strix@addCategory');
     Route::post("/addQuestion", 'App\Http\Controllers\Strix@addQuestion');
@@ -29,4 +30,5 @@ Route::group(['middleware' => 'auth:sanctum'], function(){
     Route::get("/askedBy", 'App\Http\Controllers\Strix@askedBy');
     Route::get("/byCategorie", 'App\Http\Controllers\Strix@byCategorie');
     Route::get("/QADetails", 'App\Http\Controllers\Strix@QADetails');
+    
 });
