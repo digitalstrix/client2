@@ -64,11 +64,11 @@ class Strix extends Controller
             return $validator->errors();
         } else {
 
-            if($request->user_type=='user' OR $request->user_type=='admin') {
+            if($request->user_type=='user') {
                 if (!User::where('email', $request->email)->first()) {
                     return response(["status" =>"failed", "message"=>"User is not Registered or Invaild User Type"], 401);
                 }
-                $user = User::where('email',$request->email)->get();
+                $user = User::where('email',$request->email)->first();
                 if(!Hash::check($request->password, $user->password)){
                     return response(["status" =>"failed", "message"=>"Incorrect Password"], 401);
                 }
