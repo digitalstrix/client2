@@ -63,11 +63,12 @@ class Strix extends Controller
         if ($validator->fails()) {
             return $validator->errors();
         } else {
-            
-            if($request->user_type=='user' || $request->user_type=='admin') {
-                if(!User::where('email',$request->email)->first()){
+
+            if($request->user_type=='user' OR $request->user_type=='admin') {
+                if (!User::where('email', $request->email)->first()) {
                     return response(["status" =>"failed", "message"=>"User is not Registered or Invaild User Type"], 401);
-                $user = User::where('email',$request->email)->first();
+                }
+                $user = User::where('email',$request->email)->get();
                 if(!Hash::check($request->password, $user->password)){
                     return response(["status" =>"failed", "message"=>"Incorrect Password"], 401);
                 }
@@ -81,7 +82,6 @@ class Strix extends Controller
                             ];
                     return response($response, 200);
                 }
-            }
             }
             }
             elseif($request->user_type== 'support'){
