@@ -253,18 +253,30 @@ class Strix extends Controller
             if(!User::where('user_token',$request->token)->orwhere('user_type','support')->orwhere('user_type','admin')->first()){
                 return response(["status" => "error", "message" =>"Answer is not fetched | False Token"], 401);
             }
-            $temp = User::where('user_token',$request->token)->first();
-            $user = Question::where('answered_by',$temp->id)->get();
-
+            $utemp = User::where('user_token',$request->token)->first();
+            if(!Answer::where('answered_by',$utemp->id)->first()){
+                return response(["status" => "error", "message" =>"Answer is not fetched | This is user Doesn;t Give Any Answered"], 401);
+            }
+            $user = Question::all();
+            $main = array();
+            foreach($user as $key){
+                $temp = array();
+                if(Answer::where('question_id',$key->id)->where('answered_by',$utemp->id)->first()){
+                    $answer = Answer::where('question_id',$key->id)->where('answered_by',$utemp->id)->first();
+                    $temp[] = (['Question' => $key, 'answers' => $answer]);
+                    $main[] = $temp;
+                }
+                // $main[] = $temp;
+            }
             if ($user) {
                 $response = [
                              'Status' => 'success',
                              'message' => 'All Question Answers',
-                             'data' => $user,
+                             'data' => $main,
              ];
                 return response($response, 201);
             } else {
-                return response(["status" => "error", "message" =>"Answer is not fetched"], 401);
+                return response(["status" => "error", "message" =>"Answer is not Fetched"], 401);
             }
         }
     }
