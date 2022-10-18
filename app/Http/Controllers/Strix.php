@@ -21,8 +21,8 @@ class Strix extends Controller
             "email" => "required|email|unique:users",
             "password" => "",
             "user_type" => "required|in:user,admin,support",
-            "employee_id" => "required|unique:users",
-            "department_name" => "required|in:marketing,sales,technical"
+            "employee_id" => "",
+            "department_name" => "in:marketing,sales,technical"
         );
         $validator= Validator::make($request->all(), $rules);
         if ($validator->fails()) {
@@ -54,33 +54,51 @@ class Strix extends Controller
     public function login(Request $request)
     {
         $rules =array(
-            // "email" => "required|email",
-            // "password" => "required|min:6",
-            // "user_type" => "required|in:user,vendor,admin",
-            "employee_id" => "required|unique:users",
+            "email" => "",
+            "password" => "required|min:6",
+            "user_type" => "required|in:user,support,admin",
+            "employee_id" => "",
         );
         $validator= Validator::make($request->all(), $rules);
         if ($validator->fails()) {
             return $validator->errors();
         } else {
-            if(!User::where('employee_id',$request->employee_id)->first()){
-                return response(["status" =>"failed", "message"=>"User is not Registered or Invaild User Type"], 401);
+            
+            if($request->user_type=='user' || $request->user_type=='admin') {
+                if(!User::where('email',$request->email)->first()){
+                    return response(["status" =>"failed", "message"=>"User is not Registered or Invaild User Type"], 401);
+                $user = User::where('email',$request->email)->first();
+                if(!Hash::check($request->password, $user->password)){
+                    return response(["status" =>"failed", "message"=>"Incorrect Password"], 401);
+                }
+                else{
+                if ($user) {
+                    $token = $user->createToken('my-app-token')->plainTextToken;
+                    $response = [
+                    'user' => $user,
+                    'bearer-token' => $token,
+                    "message"=>"User is Logged In"
+                            ];
+                    return response($response, 200);
+                }
             }
-            $user = User::where('employee_id',$request->employee_id)->first();
-            // if(!Hash::check($request->password, $user->password)){
-            //     return response(["status" =>"failed", "message"=>"Incorrect Password"], 401);
-            // }
-            // else{
-            if ($user) {
-                $token = $user->createToken('my-app-token')->plainTextToken;
-                $response = [
-                'user' => $user,
-                'bearer-token' => $token,
-                "message"=>"User is Logged In"
-            ];
-                return response($response, 200);
             }
-            // }
+            }
+            elseif($request->user_type== 'support'){
+                $user = User::where('employee_id',$request->employee_id)->first();
+                if(!Hash::check($request->password, $user->password)){
+                    return response(["status" =>"failed", "message"=>"Incorrect Password"], 401);
+                }
+                if ($user) {
+                    $token = $user->createToken('my-app-token')->plainTextToken;
+                    $response = [
+                    'user' => $user,
+                    'bearer-token' => $token,
+                    "message"=>"User is Logged In"
+                ];
+                    return response($response, 200);
+                }
+            }   
         }
     }
     public function addCategory(Request $request)
